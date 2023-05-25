@@ -1,0 +1,8 @@
+EVENT KillPlayer {
+    SET_VAR += var("%killer kills", "s");
+    PLAYER_ACTION SendMessage "&4&lKILL! &cYou killed %victim. Kills: " var("%default death", "s") @Killer;
+    PLAYER_ACTION PlaySound snd("Experience Orb Pickup", 1, 2) @Killer;
+    SET_VAR += var("%victim death", "s");
+    PLAYER_ACTION SendMessage "&c:☠: You died " var("%default death", "s") " times" @Victim;
+    PLAYER_ACTION PlaySound snd("Wither Break Block", 0.5, 2) @Victim;
+}

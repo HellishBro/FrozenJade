@@ -1,7 +1,7 @@
 from antlr4 import *
-from FJadeLexer import FJadeLexer
-from FJadeParser import FJadeParser
-from FJadeListener import FJadeListener
+from src.FJadeLexer import FJadeLexer
+from src.FJadeParser import FJadeParser
+from src.FJadeListener import FJadeListener
 import argparse as ap
 import os
 from os import path
@@ -18,18 +18,18 @@ tparser.add_argument("--compress", help="Automatically compress the output (if u
 tparser.add_argument("--send", help="Sends the compressed transpiled code to a recode client", action="store_true")
 tparser.add_argument("--prog-name", help="Program name that uses this tool. Default: FrozenJade", const="FrozenJade", nargs='?')
 
-rparser = subparsers.add_parser("reverse", help="Reverses DiamondFire Templates into FrozenJade code")
-rparser.add_argument("input_file", help="Input json / base64 file")
-rparser.add_argument("output_file", help="Output FrozenJade file", default="stdout")
-rparser.add_argument("--stdout", help="Als prints the output code to stdout", action="store_true")
-rparser.add_argument("--style", help="The code style to generate (https://en.wikipedia.org/wiki/Indentation_style#Brace_placement_in_compound_statements)")
-rparser.add_argument("--indent", type=int, help="The number of spaces to use for indentation")
+# rparser = subparsers.add_parser("reverse", help="Reverses DiamondFire Templates into FrozenJade code")
+# rparser.add_argument("input_file", help="Input json / base64 file")
+# rparser.add_argument("output_file", help="Output FrozenJade file", default="stdout")
+# rparser.add_argument("--stdout", help="Als prints the output code to stdout", action="store_true")
+# rparser.add_argument("--style", help="The code style to generate (https://en.wikipedia.org/wiki/Indentation_style#Brace_placement_in_compound_statements)")
+# rparser.add_argument("--indent", type=int, help="The number of spaces to use for indentation")
 
 argparser.add_argument("-o", help="Silent stdout output.", action="store_true")
 args = argparser.parse_args()
 
 async def transpile(path):
-    input_stream = FileStream(path)
+    input_stream = FileStream(path, "utf-8")
     lexer = FJadeLexer(input_stream)
     stream = CommonTokenStream(lexer)
     parser = FJadeParser(stream)

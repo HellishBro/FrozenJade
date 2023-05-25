@@ -35,7 +35,12 @@ expr: STRING
 | location
 | item
 | variable
-| gval;
+| gval
+| array // controversial
+| dictionary // controversial
+| potion
+| sound
+| particle;
 
 vector: '<' NUMBER ',' NUMBER ',' NUMBER '>';
 location: 'loc' '(' NUMBER ',' NUMBER ',' NUMBER (',' NUMBER ',' NUMBER)? ')';
@@ -44,7 +49,16 @@ variable: NAME # SimpleVar
 | 'var' '(' NAME ',' STRING ')' # NameVar
 | 'var' '(' STRING ',' STRING ')' # StringVar;
 gval: 'val' '(' STRING ',' TARGET ')';
+array: '[' expr* ']';
+dictionary: '{' (STRING ':' expr)* '}';
 
+potion: 'pot' '(' STRING ',' NUMBER ',' NUMBER ')';
+sound: 'snd' '(' STRING ',' NUMBER ',' NUMBER ')';
+particle: 'part' '(' partMaterial (',' partCluster)? ')';
+partMaterial: STRING HEX ('(' NUMBER ')')?;
+partCluster: NUMBER '{' NUMBER ',' NUMBER '}';
+
+HEX: '#' ('0'..'9' | 'A'..'F')('0'..'9' | 'A'..'F')('0'..'9' | 'A'..'F')('0'..'9' | 'A'..'F')('0'..'9' | 'A'..'F')('0'..'9' | 'A'..'F');
 TARGET: 'AllPlayers' | 'Selection' | 'Default' | 'Victim' | 'Killer' | 'Damager' | 'Shooter' | 'Projectile' | 'LastEntity';
 
 ELSE: 'ELSE';
@@ -58,6 +72,9 @@ LOCATION: 'loc';
 ITEM: 'item';
 VARIABLE: 'var';
 VALUE: 'val';
+POTION: 'pot';
+SOUND: 'snd';
+PARTICLE: 'part';
 
 CBRACE: '{}';
 LBRACE: '{';
@@ -71,6 +88,7 @@ COLON: ':';
 COMMA: ',';
 NEGATE: '!';
 SELECTOR: '@';
+PIPE: '|';
 
 STRING: '"' .*? '"';
 
@@ -78,4 +96,3 @@ NUMBER: ('0'..'9')+('.'('0'..'9') +)?;
 CATEGORY: ('A'..'Z' | '_')+;
 NAME: PName (PName | '0'..'9')*;
 fragment PName: ('a'..'z' | 'A'..'Z' | '<' | '>' | '=' | '!' | '+' | '-' | '/' | '%');
-ACTION: ('+' | '-' | '/' | '<' | '=' | '>' | 'A'..'Z' | 'a'..'z')+;

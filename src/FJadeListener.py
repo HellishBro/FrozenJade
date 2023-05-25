@@ -19,6 +19,32 @@ def number(ctx, i=0, method=float):
     except TypeError:
         return method(ctx.NUMBER().getText())
 
+def create_array(items, varobj):
+    final = []
+    current_args = [varobj]
+    for i in items:
+        if len(current_args) == 26:
+            final.append(dft.Object(
+                "set_var", "AppendList" if final else "CreateList", current_args
+            ))
+            current_args = [varobj]
+        current_args.append(i)
+    if len(current_args) > 1:
+        final.append(dft.Object(
+            "set_var", "AppendList" if final else "CreateList", current_args
+        ))
+    return final
+
+var_scopes = {
+    "s": "saved",
+    "saved": "saved",
+    "l": "local",
+    "local": "local",
+    "g": "unsaved",
+    "unsaved": "unsaved",
+    "global": "unsaved",
+}
+
 # This class defines a complete listener for a parse tree produced by FJadeParser.
 class FJadeListener(ParseTreeListener):
 
@@ -92,7 +118,7 @@ class FJadeListener(ParseTreeListener):
     def enterSimplestmt(self, ctx: FJadeParser.SimplestmtContext):
         args = []
         for expr in ctx.paramslist().expr():
-            args.append(self.enterExpr(expr))
+            args.append(a := self.enterExpr(expr, args[0] if args else None))
         invert = {"inverted": "NOT"} if ctx.NEGATE() else {}
         target = {"target": ctx.TARGET().getText()} if ctx.TARGET() else {}
         tags = []
@@ -126,9 +152,9 @@ class FJadeListener(ParseTreeListener):
 
     # Enter a parse tree produced by FJadeParser#elsestmt.
     def enterElsestmt(self, ctx: FJadeParser.ElsestmtContext):
-        self.template.add(
+        self.template.add([
             dft.Object("else", ""),
-            dft.Bracket()
+            dft.Bracket()]
         )
 
     # Exit a parse tree produced by FJadeParser#elsestmt.
@@ -168,7 +194,9 @@ class FJadeListener(ParseTreeListener):
 
 
     # Enter a parse tree produced by FJadeParser#expr.
-    def enterExpr(self, ctx: FJadeParser.ExprContext):
+    def enterExpr(self, ctx: FJadeParser.ExprContext, varobj=None):
+        if type(varobj) == dft.Variable:
+            varobj.slot = None
         if ctx.NAME():
             return dft.Variable(ctx.NAME().getText())
         elif ctx.NUMBER():
@@ -191,6 +219,16 @@ class FJadeListener(ParseTreeListener):
                     return self.enterSimpleVar(ctx.variable())
         elif ctx.gval():
             return self.enterGval(ctx.gval())
+        elif ctx.array():
+            return self.enterArray(ctx.array(), varobj)
+        elif ctx.dictionary():
+            return self.enterDictionary(ctx.dictionary(), varobj)
+        elif ctx.potion():
+            return self.enterPotion(ctx.potion())
+        elif ctx.sound():
+            return self.enterSound(ctx.sound())
+        elif ctx.particle():
+            return self.enterParticle(ctx.particle())
         else:
             return dft.Number(0)
 
@@ -247,18 +285,9 @@ class FJadeListener(ParseTreeListener):
 
     # Enter a parse tree produced by FJadeParser#NameVar.
     def enterNameVar(self, ctx:FJadeParser.NameVarContext):
-        scopes = {
-            "s": "saved",
-            "saved": "saved",
-            "l": "local",
-            "local": "local",
-            "g": "unsaved",
-            "unsaved": "unsaved",
-            "global": "unsaved"
-        }
         if ctx.STRING():
             return dft.Variable(
-                ctx.NAME().getText(), scopes.get(string(ctx), "unsaved")
+                ctx.NAME().getText(), var_scopes.get(string(ctx), "unsaved")
             )
         else:
             return dft.Variable(
@@ -272,18 +301,9 @@ class FJadeListener(ParseTreeListener):
 
     # Enter a parse tree produced by FJadeParser#StringVar.
     def enterStringVar(self, ctx:FJadeParser.StringVarContext):
-        scopes = {
-            "s": "saved",
-            "saved": "saved",
-            "l": "local",
-            "local": "local",
-            "g": "unsaved",
-            "unsaved": "unsaved",
-            "global": "unsaved"
-        }
         if ctx.STRING(1):
             return dft.Variable(
-                string(ctx, 0), scopes.get(string(ctx, 1), "unsaved")
+                string(ctx, 0), var_scopes.get(string(ctx, 1), "unsaved")
             )
         else:
             return dft.Variable(
@@ -304,6 +324,97 @@ class FJadeListener(ParseTreeListener):
 
     # Exit a parse tree produced by FJadeParser#gval.
     def exitGval(self, ctx:FJadeParser.GvalContext):
+        pass
+
+
+    # Enter a parse tree produced by FJadeParser#array.
+    def enterArray(self, ctx:FJadeParser.ArrayContext, varobj=None):
+        if varobj:
+            turned_list = []
+            i = 0
+            while ctx.expr(i):
+                turned_list.append(self.enterExpr(ctx.expr(i)))
+                i += 1
+            created = create_array(turned_list, varobj)
+            self.template.add(created)
+            return varobj
+
+    # Exit a parse tree produced by FJadeParser#array.
+    def exitArray(self, ctx:FJadeParser.ArrayContext):
+        pass
+
+
+    # Enter a parse tree produced by FJadeParser#dictionary.
+    def enterDictionary(self, ctx:FJadeParser.DictionaryContext, varobj=None):
+        if varobj:
+            keys = []
+            values = []
+            i = 0
+            while ctx.STRING(i):
+                keys.append(string(ctx, i))
+                values.append(self.enterExpr(ctx.expr(i), varobj))
+            key_var = create_array(keys, dft.Variable("k", "local", 0))
+            val_var = create_array(values, dft.Variable("v", "local", 0))
+            self.template.add(dft.Object(
+                "set_var", "CreateDict", [varobj, key_var, val_var]
+            ))
+            return varobj
+
+    # Exit a parse tree produced by FJadeParser#dictionary.
+    def exitDictionary(self, ctx:FJadeParser.DictionaryContext):
+        pass
+
+
+    # Enter a parse tree produced by FJadeParser#potion.
+    def enterPotion(self, ctx:FJadeParser.PotionContext):
+        return dft.Potion(
+            string(ctx), number(ctx), number(ctx, 1)
+        )
+
+    # Exit a parse tree produced by FJadeParser#potion.
+    def exitPotion(self, ctx:FJadeParser.PotionContext):
+        pass
+
+
+    # Enter a parse tree produced by FJadeParser#sound.
+    def enterSound(self, ctx:FJadeParser.SoundContext):
+        return dft.Sound(
+            string(ctx), number(ctx), number(ctx, 1)
+        )
+
+    # Exit a parse tree produced by FJadeParser#sound.
+    def exitSound(self, ctx:FJadeParser.SoundContext):
+        pass
+
+
+    # Enter a parse tree produced by FJadeParser#particle.
+    def enterParticle(self, ctx:FJadeParser.ParticleContext):
+        material = self.enterPartMaterial(ctx.partMaterial())
+        cluster = self.enterPartCluster(ctx.partCluster)
+        return dft.Particle(
+            material[0], cluster[0], (cluster[1], cluster[2]), material[1], material[2], material[3]
+        )
+
+    # Exit a parse tree produced by FJadeParser#particle.
+    def exitParticle(self, ctx:FJadeParser.ParticleContext):
+        pass
+
+
+    # Enter a parse tree produced by FJadeParser#partMaterial.
+    def enterPartMaterial(self, ctx:FJadeParser.PartMaterialContext):
+        return string(ctx), ctx.HEX().getText()[1:], number(ctx)
+
+    # Exit a parse tree produced by FJadeParser#partMaterial.
+    def exitPartMaterial(self, ctx:FJadeParser.PartMaterialContext):
+        pass
+
+
+    # Enter a parse tree produced by FJadeParser#partCluster.
+    def enterPartCluster(self, ctx:FJadeParser.PartClusterContext):
+        return number(ctx), number(ctx, 1), number(ctx, 2)
+
+    # Exit a parse tree produced by FJadeParser#partCluster.
+    def exitPartCluster(self, ctx:FJadeParser.PartClusterContext):
         pass
 
 

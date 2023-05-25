@@ -1,0 +1,25 @@
+EVENT BreakBlock {
+    GAME_ACTION CancelEvent;
+    SET_VAR = drops [
+        "dirt"
+        "grass_block"
+        "grass"
+        "cobblestone"
+        "coal"
+        "granite"
+        "gravel"
+        "bread"
+        "apple"
+        "oak_plank"
+        "coal"
+        "iron_ingot"
+        "gold_ingot"
+        "sand"
+    ];
+    SET_VAR ListLength var("len", "l") drops;
+    SET_VAR RandomNumber var("rnd", "l") 1 var("len", "l");
+    SET_VAR GetListValue var("chosen one", "l") drops var("rnd", "l");
+    GAME_ACTION SetBlock "air" val("Event Block Location", Default);
+    SET_VAR SetItemType var("chosen one", "l") item("stone", 1) var("chosen one", "l");
+    GAME_ACTION SpawnItem var("chosen one", "l") val("Event Block Location", Default);
+}

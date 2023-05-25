@@ -1,0 +1,6 @@
+EVENT Death {
+    // This doesn't trigger when it is PvP death. This only accounts for death caused by "natural causes"
+    SET_VAR += var("%default death", "s");
+    PLAYER_ACTION SendMessage "&c:☠: You died " var("%default death", "s") " times";
+    PLAYER_ACTION PlaySound snd("Wither Break Block", 0.5, 2);
+}

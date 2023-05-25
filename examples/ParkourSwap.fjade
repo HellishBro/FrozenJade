@@ -1,0 +1,3 @@
+EVENT SwapHands {
+    PLAYER_ACTION Teleport var("%default checkpoint", "g");
+}

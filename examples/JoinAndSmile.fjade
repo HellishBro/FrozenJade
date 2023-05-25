@@ -1,0 +1,11 @@
+EVENT Join {
+    IF_VAR VarExists var("%default existed", "saved") ! {
+        SET_VAR = var("%default existed", "saved") 1;
+        SET_VAR += var("unique joins", "saved");
+        PLAYER_ACTION SendMessage "&e%default just joined for the first time! &8#%var(unique joins)" @AllPlayers;
+        PLAYER_ACTION PlaySound snd("Pling", 1, 2) @AllPlayers;
+    } ELSE {
+        PLAYER_ACTION SendMessage "&a%default joined!" @AllPlayers;
+        PLAYER_ACTION PlaySound snd("Experience Orb Pickup", 1, 2) @AllPlayers;
+    }
+}

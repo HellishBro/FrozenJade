@@ -1,0 +1,24 @@
+EVENT Sneak {
+    IF_PLAYER StandingOn item("netherite_block", 1) { // Or you can use the string representation of the item here
+        SET_VAR = var("%default timestamp", "g") val("Timestamp", Default);
+        SET_VAR = var("%default checkpoint", "g") val("Location", Default);
+        PLAYER_ACTION ActionBar "&eStarted!";
+        PLAYER_ACTION PlaySound snd("Pling", 1, 2);
+        PLAYER_ACTION SetAllowFlight |"Allow Flight": "Disable";
+    }
+    IF_PLAYER StandingOn item("gold_block", 1) {
+        IF_VAR = var("%default timestamp", "g") 0 ! {
+            SET_VAR = var("%default checkpoint", "g") val("Location", Default);
+            PLAYER_ACTION PlaySound snd("Experience Orb Pickup", 1, 2);
+        }
+    }
+    IF_PLAYER StandingOn item("diamond_block", 1) {
+        IF_VAR = var("%default timestamp", "g") 0 ! {
+            SET_VAR - var(t, "l") val("Timestamp", Default) var("%default timestamp", "g");
+            SET_VAR RoundNumber var(t, "l");
+            PLAYER_ACTION SendMessage "&e%default finished the parkour in %var(t) seconds!" @AllPlayers;
+            PLAYER_ACTION SetAllowFlight |"Allow Flight": "Enable";
+            SET_VAR = var("%default timestamp", "g") 0;
+        }
+    }
+}
