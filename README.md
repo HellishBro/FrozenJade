@@ -19,6 +19,7 @@ type `exit()` and then:
 ```bash
 pip install antlr4-python3-runtime
 pip install amulet-nbt
+pip install pyperclip
 ```
 
 then, `cd` into `FrozenJade` directory (one with the init file and the src directory) and you can start working from there.
