@@ -1,4 +1,7 @@
 # Generated from FJade.g4 by ANTLR 4.12.0
+import random
+import string
+
 from antlr4 import *
 if __name__ is not None and "." in __name__:
     from .FJadeParser import FJadeParser
@@ -34,6 +37,9 @@ def create_array(items, varobj):
             "set_var", "AppendList" if final else "CreateList", current_args
         ))
     return final
+
+def random_string():
+    return "".join([random.choice(string.ascii_letters) for _ in range(random.randint(5, 11))])
 
 var_scopes = {
     "s": "saved",
@@ -118,7 +124,7 @@ class FJadeListener(ParseTreeListener):
     def enterSimplestmt(self, ctx: FJadeParser.SimplestmtContext):
         args = []
         for expr in ctx.paramslist().expr():
-            args.append(a := self.enterExpr(expr, args[0] if args else None))
+            args.append(self.enterExpr(expr))
         invert = {"inverted": "NOT"} if ctx.NEGATE() else {}
         target = {"target": ctx.TARGET().getText()} if ctx.TARGET() else {}
         tags = []
@@ -132,6 +138,8 @@ class FJadeListener(ParseTreeListener):
         args.extend(tags)
         kwargs = invert.copy()
         kwargs.update(target)
+        if "CALL" in ctx.CATEGORY().getText():
+            kwargs["data"] = ctx.NAME().getText()
         self.template.add(
             dft.Object(ctx.CATEGORY().getText().lower(), ctx.NAME().getText(), args, **kwargs)
         )
@@ -194,9 +202,7 @@ class FJadeListener(ParseTreeListener):
 
 
     # Enter a parse tree produced by FJadeParser#expr.
-    def enterExpr(self, ctx: FJadeParser.ExprContext, varobj=None):
-        if type(varobj) == dft.Variable:
-            varobj.slot = None
+    def enterExpr(self, ctx: FJadeParser.ExprContext):
         if ctx.NAME():
             return dft.Variable(ctx.NAME().getText())
         elif ctx.NUMBER():
@@ -220,9 +226,9 @@ class FJadeListener(ParseTreeListener):
         elif ctx.gval():
             return self.enterGval(ctx.gval())
         elif ctx.array():
-            return self.enterArray(ctx.array(), varobj)
+            return self.enterArray(ctx.array())
         elif ctx.dictionary():
-            return self.enterDictionary(ctx.dictionary(), varobj)
+            return self.enterDictionary(ctx.dictionary())
         elif ctx.potion():
             return self.enterPotion(ctx.potion())
         elif ctx.sound():
@@ -328,16 +334,16 @@ class FJadeListener(ParseTreeListener):
 
 
     # Enter a parse tree produced by FJadeParser#array.
-    def enterArray(self, ctx:FJadeParser.ArrayContext, varobj=None):
-        if varobj:
-            turned_list = []
-            i = 0
-            while ctx.expr(i):
-                turned_list.append(self.enterExpr(ctx.expr(i)))
-                i += 1
-            created = create_array(turned_list, varobj)
-            self.template.add(created)
-            return varobj
+    def enterArray(self, ctx:FJadeParser.ArrayContext):
+        turned_list = []
+        i = 0
+        while ctx.expr(i):
+            turned_list.append(self.enterExpr(ctx.expr(i)))
+            i += 1
+        temp_var = dft.Variable(random_string(), "local")
+        created = create_array(turned_list, temp_var)
+        self.template.add(created)
+        return temp_var
 
     # Exit a parse tree produced by FJadeParser#array.
     def exitArray(self, ctx:FJadeParser.ArrayContext):
@@ -345,20 +351,20 @@ class FJadeListener(ParseTreeListener):
 
 
     # Enter a parse tree produced by FJadeParser#dictionary.
-    def enterDictionary(self, ctx:FJadeParser.DictionaryContext, varobj=None):
-        if varobj:
-            keys = []
-            values = []
-            i = 0
-            while ctx.STRING(i):
-                keys.append(string(ctx, i))
-                values.append(self.enterExpr(ctx.expr(i), varobj))
-            key_var = create_array(keys, dft.Variable("k", "local", 0))
-            val_var = create_array(values, dft.Variable("v", "local", 0))
-            self.template.add(dft.Object(
-                "set_var", "CreateDict", [varobj, key_var, val_var]
-            ))
-            return varobj
+    def enterDictionary(self, ctx:FJadeParser.DictionaryContext):
+        keys = []
+        values = []
+        i = 0
+        while ctx.STRING(i):
+            keys.append(string(ctx, i))
+            values.append(self.enterExpr(ctx.expr(i)))
+        key_var = create_array(keys, dft.Variable("k", "local", 0))
+        val_var = create_array(values, dft.Variable("v", "local", 0))
+        temp_var = dft.Variable(random_string(), "local")
+        self.template.add(dft.Object(
+            "set_var", "CreateDict", [temp_var, key_var, val_var]
+        ))
+        return temp_var
 
     # Exit a parse tree produced by FJadeParser#dictionary.
     def exitDictionary(self, ctx:FJadeParser.DictionaryContext):
