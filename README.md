@@ -38,19 +38,19 @@ py __init__.py transpile "input/file.fjade" --stdout --compress --send
 EVENT BreakBlock {
     GAME_ACTION CancelEvent;
     SET_VAR = drops [
-        "dirt"
-        "grass_block"
-        "grass"
-        "cobblestone"
-        "coal"
-        "granite"
-        "gravel"
-        "bread"
-        "apple"
-        "oak_plank"
-        "coal"
-        "iron_ingot"
-        "gold_ingot"
+        "dirt",
+        "grass_block",
+        "grass",
+        "cobblestone",
+        "coal",
+        "granite",
+        "gravel",
+        "bread",
+        "apple",
+        "oak_plank",
+        "coal",
+        "iron_ingot",
+        "gold_ingot",
         "sand"
     ];
     SET_VAR ListLength var("len", "l") drops;
