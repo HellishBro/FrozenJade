@@ -6,6 +6,7 @@ import argparse as ap
 import os
 from os import path
 import asyncio
+import pyperclip
 
 argparser = ap.ArgumentParser(description="A command-line tool for converting between FrozenJade code and DiamondFire Templates.")
 subparsers = argparser.add_subparsers(dest="method", help="The method of conversion")
@@ -17,6 +18,7 @@ tparser.add_argument("--stdout", help="Also prints the output to stdout", action
 tparser.add_argument("--compress", help="Automatically compress the output (if using stdout then compresses it and print, or if output file is specifies then it will be a .b64 file)", action="store_true")
 tparser.add_argument("--send", help="Sends the compressed transpiled code to a recode client", action="store_true")
 tparser.add_argument("--prog-name", help="Program name that uses this tool. Default: FrozenJade", const="FrozenJade", nargs='?')
+tparser.add_argument("--copy", help="copies the data to your clipboard (requires stdout to be on)", action="store_true")
 
 # rparser = subparsers.add_parser("reverse", help="Reverses DiamondFire Templates into FrozenJade code")
 # rparser.add_argument("input_file", help="Input json / base64 file")
@@ -41,8 +43,10 @@ async def transpile(path):
     if (args.stdout or args.output_file == "stdout") and not args.o:
         if args.compress:
             print(executer.template.compress())
+            if args.copy: pyperclip.copy(executer.template.compress())
         elif not args.compress:
             print(str(executer.template))
+            if args.copy: pyperclip.copy(str(executer.template))
     if not args.output_file == "stdout":
         with open(args.output_file, "w+") as output_file:
             if args.compress:

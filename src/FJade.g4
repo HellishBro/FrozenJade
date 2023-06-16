@@ -49,7 +49,7 @@ variable: NAME # SimpleVar
 | 'var' '(' NAME ',' STRING ')' # NameVar
 | 'var' '(' STRING ',' STRING ')' # StringVar;
 gval: 'val' '(' STRING ',' TARGET ')';
-array: '[' expr* ']';
+array: '[' expr? (',' expr)* ']';
 dictionary: '{' (STRING ':' expr)* '}';
 
 potion: 'pot' '(' STRING ',' NUMBER ',' NUMBER ')';

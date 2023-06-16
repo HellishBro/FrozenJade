@@ -1,6 +1,6 @@
 # Generated from FJade.g4 by ANTLR 4.12.0
 import random
-import string
+import string as stringlib
 
 from antlr4 import *
 if __name__ is not None and "." in __name__:
@@ -39,7 +39,7 @@ def create_array(items, varobj):
     return final
 
 def random_string():
-    return "".join([random.choice(string.ascii_letters) for _ in range(random.randint(5, 11))])
+    return "".join([random.choice(stringlib.ascii_letters) for _ in range(random.randint(5, 11))])
 
 var_scopes = {
     "s": "saved",
@@ -340,8 +340,9 @@ class FJadeListener(ParseTreeListener):
         while ctx.expr(i):
             turned_list.append(self.enterExpr(ctx.expr(i)))
             i += 1
-        temp_var = dft.Variable(random_string(), "local")
+        temp_var = dft.Variable(random_string(), "local", 0)
         created = create_array(turned_list, temp_var)
+        # print(created[0].arguments)
         self.template.add(created)
         return temp_var
 
@@ -360,7 +361,7 @@ class FJadeListener(ParseTreeListener):
             values.append(self.enterExpr(ctx.expr(i)))
         key_var = create_array(keys, dft.Variable("k", "local", 0))
         val_var = create_array(values, dft.Variable("v", "local", 0))
-        temp_var = dft.Variable(random_string(), "local")
+        temp_var = dft.Variable(random_string(), "local", 0)
         self.template.add(dft.Object(
             "set_var", "CreateDict", [temp_var, key_var, val_var]
         ))
